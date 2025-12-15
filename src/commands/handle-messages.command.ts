@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from '../infrastructure/database/entities/notification.entity';
 import * as amqp from 'amqplib';
+import { Inbox, InboxEventStatus } from 'src/infrastructure/database/entities/inbox.entity';
 
 @Injectable()
 @Command({
@@ -17,6 +18,8 @@ export class HandleMessagesCommand extends CommandRunner {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
+    @InjectRepository(Inbox)
+    private readonly inboxRepository: Repository<Inbox>
   ) {
     super();
   }
@@ -42,11 +45,10 @@ export class HandleMessagesCommand extends CommandRunner {
             try {
               const data = JSON.parse(msg.content.toString());
               await this.handleUserCreated(data);
-              
               this.channel.ack(msg);
             } catch (error) {
               console.error(' Error processing message:', error);
-              this.channel.nack(msg, false, false);
+              this.channel.nack(msg, false, true);
             }
           }
         },
@@ -61,20 +63,33 @@ export class HandleMessagesCommand extends CommandRunner {
   }
 
   private async handleUserCreated(data: any): Promise<void> {
+    const { id, name, password, createdAt } = data;
 
-    console.log('User ID:', data.id);
-    console.log('User Name:', data.name);
-    console.log('Password:', data.password);
-    console.log('Created At:', data.createdAt);
+    const processedMessages = await this.inboxRepository.findOne({ where: { id } });
+    if (processedMessages) {
+      console.log(`Message with event ID ${id} already consumed. Skipping...`);
+      this.channel.ack(data);
+      return;
+    }
 
     const notification = this.notificationRepository.create({
-      name: data.name,
-      password: data.password,
-      message: `User created successfully with name: ${data.name} and password: ${data.password}`,
+      name,
+      password,
+      message: `User ${id} created successfully with name: ${name} and password: ${password} at time ${createdAt}`,
     });
-
     await this.notificationRepository.save(notification);
     console.log('Notification saved to database');
+
+    await this.inboxRepository.save({
+      id,
+      eventType: 'UserCreated',
+      payload: data,
+      processed: InboxEventStatus.PROCESSED,
+      receivedAt: new Date(),
+    });
+    console.log('Notification saved to inbox');
+
+
   }
 
   private async cleanup(): Promise<void> {

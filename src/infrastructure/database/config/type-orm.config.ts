@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
 import { Notification } from '../entities/notification.entity';
+import { Inbox } from '../entities/inbox.entity';
 
 
 dotenv.config();
@@ -14,7 +15,8 @@ const rawDataSourceOptions = {
     database: process.env.DATABASE_NAME,
     synchronize: true,
     logging:false,
-    entities: [Notification],
+    entities: [Notification,Inbox],
+
 };
 
 export const dataSourceOptions = rawDataSourceOptions as DataSourceOptions;
