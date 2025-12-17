@@ -5,12 +5,14 @@ import { AppService } from './app.service';
 import { NotificationModule } from './feature/notification.module';
 import { dataSourceOptions } from './infrastructure/database/config/type-orm.config';
 import { CommandsModule } from './commands/commands.module';
+import { RabbitmqModule } from './infrastructure/rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),
     NotificationModule,
     CommandsModule,
+    RabbitmqModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,37 +1,37 @@
-import {Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn} from 'typeorm';
-
-export enum InboxEventStatus {
-  PENDING = 'PENDING',
-  PROCESSED = 'PROCESSED',
-  FAILED = 'FAILED',
-}
+import {
+  Column,
+  CreateDateColumn,
+  DeleteDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('inbox')
 export class Inbox {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @Column({ name: 'message_id', type: 'uuid', unique: true })
+  messageId: string;
 
-  @Column()
-  eventType: string;
+  @Column({ type: 'varchar', length: 100 })
+  type: string;
 
-  @Column('jsonb')
-  payload: any;
+  @Column({ type: 'varchar', length: 100,nullable:true })
+  handlerName: string;
 
-  @Column({ default: InboxEventStatus.PENDING })
-  processed: InboxEventStatus;
+  @Column({ type: 'jsonb', nullable: true })
+  headers: object;
 
-  @CreateDateColumn()
+  @Column({ type: 'jsonb', nullable: true })
+  body: object;
+
+  @Column({ name: 'processed_at', type: 'timestamp', nullable: true })
+  processedAt: Date;
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @Column({ nullable: true })
-  receivedAt: Date;
 
   @DeleteDateColumn()
   deletedAt: Date;
-  
 }
-
