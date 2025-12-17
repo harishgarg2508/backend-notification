@@ -27,7 +27,6 @@ export class HandleMessagesCommand extends CommandRunner {
     await this.configurerService.setupTopology();
 
     await this.consumerService.startConsumer();
-
-    // await new Promise(() => {}); 
+    
   }
 }
